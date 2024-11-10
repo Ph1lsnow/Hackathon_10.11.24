@@ -1,6 +1,15 @@
 import sys
 import time
 
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+from reportlab.lib.utils import ImageReader
+import io
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+
+
 import pyedflib
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QVBoxLayout,
@@ -347,6 +356,10 @@ class EEGApp(QMainWindow):
         self.export_txt_button.clicked.connect(self.export_annotations_to_txt)
         button_layout.addWidget(self.export_txt_button)
 
+        self.generate_pdf_report_button = QPushButton("Выгрузить отчет", self)
+        self.generate_pdf_report_button.clicked.connect(self.generate_pdf_report)
+        button_layout.addWidget(self.generate_pdf_report_button)
+
         # **Settings Block**
         # 1. Уровень уверенности
         self.confidence_slider = QSlider(Qt.Horizontal, self)
@@ -401,6 +414,70 @@ class EEGApp(QMainWindow):
         self.data = None
         self.labels = {'swd': [], 'ds': [], 'is': [], 'an': []}
         self.label_regions = []
+
+    def generate_pdf_report(self):
+        """
+        Generate a PDF report with a summary and three ECG plots using built-in fonts.
+        """
+        if not self.data:
+            QMessageBox.warning(self, "Warning", "No data available for report generation.")
+            return
+
+        save_path, _ = QFileDialog.getSaveFileName(
+            self, "Save PDF Report", "", "PDF Files (*.pdf)"
+        )
+        if not save_path:
+            return
+
+        try:
+            # Create a PDF canvas
+            c = canvas.Canvas(save_path, pagesize=A4)
+            width, height = A4
+
+            # Use built-in Helvetica font, supports Cyrillic
+            c.setFont("Helvetica", 18)
+            c.drawString(2 * cm, height - 2 * cm, f"Report")
+            c.setFont("Helvetica", 12)
+            c.drawString(2 * cm, height - 3 * cm, f"Date: {time.strftime('%d.%m.%Y')}")
+            c.drawString(2 * cm, height - 4 * cm, f"ECG analysis conducted with duration {self.signal_length:.2f} minutes.")
+
+            # Labels summary
+            c.drawString(2 * cm, height - 5 * cm, f"Found markers: {sum(len(lst) for lst in self.labels.values())}")
+            c.drawString(2 * cm, height - 6 * cm, f"Deep sleep: {len(self.labels['ds'])}")
+            c.drawString(2 * cm, height - 7 * cm, f"Intermediate sleep: {len(self.labels['is'])}")
+            c.drawString(2 * cm, height - 8 * cm, f"Epilepsy: {len(self.labels['swd'])}")
+            c.drawString(2 * cm, height - 9 * cm, f"Anomalies: {len(self.labels['an'])}")
+
+            # Function to generate and embed plots in the PDF
+            def plot_and_embed(signal_data, title, y_offset):
+                fig = Figure(figsize=(4, 2))
+                ax = fig.add_subplot(111)
+                ax.plot(np.linspace(0, self.signal_length, len(signal_data)), signal_data, lw=0.5)
+                ax.set_title(title)
+                ax.set_xlabel("Time (s)")
+                ax.set_ylabel("Amplitude")
+                ax.grid(True)
+
+                buf = io.BytesIO()
+                FigureCanvas(fig).print_png(buf)
+                buf.seek(0)  # Reset buffer to the beginning
+
+                # Create an ImageReader object for the buffer
+                img = ImageReader(buf)
+                c.drawImage(img, 2 * cm, y_offset, width=16 * cm, height=4 * cm)
+                buf.close()
+
+            # Plot the first three data signals
+            plot_and_embed(self.data[0], "Example ECG 1", height - 15 * cm)
+            plot_and_embed(self.data[1], "Example ECG 2", height - 20 * cm)
+            plot_and_embed(self.data[2], "Example ECG 3", height - 25 * cm)
+
+            # Save the PDF
+            c.save()
+            QMessageBox.information(self, "Success", f"The report was successfully saved to the file: {save_path}")
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to create PDF report: {e}")
 
     def export_annotations_to_txt(self):
         """
