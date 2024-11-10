@@ -1,11 +1,13 @@
 import sys
+import time
+
 import pyedflib
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QVBoxLayout,
     QWidget, QFileDialog, QMessageBox, QToolTip, QHBoxLayout, QFormLayout, QSlider, QLabel, QDoubleSpinBox,
     QProgressDialog, QDialog
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QCursor, QMovie
 from pyqtgraph import PlotWidget, mkPen, setConfigOptions, LinearRegionItem
 import numpy as np
@@ -449,13 +451,8 @@ class EEGApp(QMainWindow):
         if self.edf_handler.original_file is None:
             QMessageBox.critical(self, "Ошибка", f"Файл не был импортиртирован")
         else:
-            # Create a loading dialog with a spinning circle (GIF)
-            loading_dialog = QDialog(self)
-            loading_dialog.setWindowTitle("Processing AI-helper")
-            loading_dialog.setWindowModality(Qt.ApplicationModal)
-            loading_dialog.setFixedSize(200, 200)
-
-            # Set up layout and loading animation
+            # Create and set up the loading dialog
+            loading_dialog = QDialog()
             layout = QVBoxLayout()
             loading_label = QLabel("Processing...")
 
@@ -470,7 +467,7 @@ class EEGApp(QMainWindow):
                 # Run the AI processing
                 self.process_edf_data_form_ai()
                 self.plot_data()
-                QMessageBox.information(self, "Успех", f"Файл был обработан")
+                QMessageBox.information(self, "Успех", f"Файл был обработан \n Найдено swd: {len(self.labels['swd'])}, ds: {len(self.labels['ds'])}, is: {len(self.labels['is'])}, an: {len(self.labels['an'])}")
             except Exception as e:
                 QMessageBox.critical(self, "Ошибка", f"Произошла ошибка: {str(e)}")
             finally:
