@@ -340,6 +340,11 @@ class EEGApp(QMainWindow):
         self.save_button.clicked.connect(self.save_data)
         button_layout.addWidget(self.save_button)
 
+        # Export annotations to txt button
+        self.export_txt_button = QPushButton("Выгрузить аннотации в TXT", self)
+        self.export_txt_button.clicked.connect(self.export_annotations_to_txt)
+        button_layout.addWidget(self.export_txt_button)
+
         # **Settings Block**
         # 1. Уровень уверенности
         self.confidence_slider = QSlider(Qt.Horizontal, self)
@@ -394,6 +399,37 @@ class EEGApp(QMainWindow):
         self.data = None
         self.labels = {'swd': [], 'ds': [], 'is': [], 'an': []}
         self.label_regions = []
+
+    def export_annotations_to_txt(self):
+        """
+        Export annotations to a .txt file in the format:
+        NN    время    маркер
+        """
+        if not self.edf_handler.get_annotations():
+            QMessageBox.warning(self, "Предупреждение", "Нет аннотаций для экспорта.")
+            return
+
+        # Open file dialog to select save location
+        save_path, _ = QFileDialog.getSaveFileName(
+            self, "Сохранить аннотации в TXT файл", "", "Text Files (*.txt)"
+        )
+        if save_path:
+            try:
+                annotations = self.edf_handler.get_annotations()
+                with open(save_path, 'w') as file:
+                    file.write("NN\tвремя\tмаркер\n")
+                    for idx, (onset, _, description) in enumerate(annotations, start=1):
+                        # Convert onset time (in seconds) to HH:MM:SS format
+                        hours = int(onset // 3600)
+                        minutes = int((onset % 3600) // 60)
+                        seconds = int(onset % 60)
+                        formatted_time = f"{hours:1}:{minutes:02}:{seconds:02}"
+
+                        # Write line in the specified format
+                        file.write(f"{idx}\t{formatted_time}\t{description}\n")
+                QMessageBox.information(self, "Успех", f"Аннотации успешно сохранены в файл: {save_path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Ошибка", f"Не удалось сохранить аннотации: {e}")
 
     def import_data(self):
         # Open EDF file
