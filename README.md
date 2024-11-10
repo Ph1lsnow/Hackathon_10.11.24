@@ -5,7 +5,7 @@
 
 **Стек:** PyEDFlib, Scikit-learn, TensorFlow, Keras, NumPy, PyQT.
 
-## [Screencast](-)
+## [Screencast](https://disk.yandex.ru/i/PtTd26cXgSXvEg) 
 ## [Desktop application](https://disk.yandex.ru/d/6Wf5t6aq32rArw)
 
 ## Команда
