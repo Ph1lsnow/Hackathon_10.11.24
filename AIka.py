@@ -105,7 +105,12 @@ def classify_seconds(probabilities, time, threshold=0.5, min_dist_between=0.5, m
                 # Если это не начало вектора, то завершаем текущий отрезок
                 if i != 0 and i - 1 > start_time_index and min_dist_between + last_end[cl] <= time[start_time_index] and \
                         time[i - 1] >= min_len + time[start_time_index]:
-                    segments.append((start_time_index, i - 1, cl, sum_of_score / (i - start_time_index)))
+                    segments.append([start_time_index, i - 1, cl, sum_of_score / (i - start_time_index)])
+                    last_end[cl] = time[i - 1]
+
+                elif i != 0 and i - 1 > start_time_index and min_dist_between + last_end[cl] > time[start_time_index]:
+                    segments[-1][1] = i - 1
+                    segments[-1][3] = (segments[-1][3] + (sum_of_score / (i - start_time_index))) / 2
                     last_end[cl] = time[i - 1]
 
                 for q in range(start_time_index, i):
@@ -119,7 +124,7 @@ def classify_seconds(probabilities, time, threshold=0.5, min_dist_between=0.5, m
 def find_anomals(segments, time, probabilities, max_dist_between=1, min_delta_score=0.1):
     anomals = []
     for i in range(len(segments) - 1):
-        if segments[i][2] == segments[i + 1][2] and time[segments[i][1]] - time[segments[i + 1][0]] <= max_dist_between:
+        if segments[i][2] == segments[i + 1][2] and time[segments[i + 1][0]]-time[segments[i][1]] <= max_dist_between:
             max_prob = max(probabilities[segments[i][1]][segments[i][2]],
                            probabilities[segments[i + 1][1]][segments[i + 1][2]])
             min_prob = 1
@@ -139,7 +144,7 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-def func_with_nn(path, max_dist_between=1, min_delta_score=0.1, threshold=0.5, min_dist_between=0.5, min_len=0.5):
+def func_with_nn(path, threshold=0.5, min_dist_between=0.5, min_len=0.5, min_delta_score=0.1, max_dist_between=1):
     model_cl1 = load_model(resource_path('model/model_f1_81_cl1_v2.keras'))
     model_cl2 = load_model(resource_path('model/model_f1_75_cl2_v2.keras'))
     model_cl3 = load_model(resource_path('model/model_f1_macro_78_cl3_v2.keras'))

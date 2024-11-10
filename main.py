@@ -381,7 +381,7 @@ class EEGApp(QMainWindow):
         # 3. Минимальная длина фаз
         self.min_phase_length = QDoubleSpinBox(self)
         self.min_phase_length.setRange(0.1, 10000.0)
-        self.min_phase_length.setValue(0.5)
+        self.min_phase_length.setValue(0.2)
         self.min_phase_length.setSingleStep(0.1)
         settings_layout.addRow(QLabel("Минимальная длина фаз (сек.)"), self.min_phase_length)
 
@@ -395,8 +395,8 @@ class EEGApp(QMainWindow):
         # 5. Минимальный перепад для аномалий
         self.min_anomaly_gradient = QSlider(Qt.Horizontal, self)
         self.min_anomaly_gradient.setRange(0, 100)
-        self.min_anomaly_gradient.setValue(50)
-        self.min_anomaly_gradient_label = QLabel(f"Минимальный перепад при определении аномалий (50%)")
+        self.min_anomaly_gradient.setValue(10)
+        self.min_anomaly_gradient_label = QLabel(f"Минимальный перепад при определении аномалий (10%)")
         self.min_anomaly_gradient.valueChanged.connect(
             lambda value: self.min_anomaly_gradient_label.setText(f"Минимальный перепад при определении аномалий ({value:^3}%)")
         )
@@ -591,7 +591,7 @@ class EEGApp(QMainWindow):
         self.signal_length = len(self.data[0]) / self.sample_rate  # in seconds
 
         # Генерируем/Читаем аннотации
-        data_annotations: list[tuple[float, int, str, int]] = func_with_nn(self.edf_handler.original_file, self.confidence_slider.value() / 100, self.min_time_between_phases.value(), self.min_phase_length.value(), self.min_non_anomalous_time.value(), self.min_anomaly_gradient.value())
+        data_annotations: list[tuple[float, int, str, int]] = func_with_nn(self.edf_handler.original_file, self.confidence_slider.value() / 100, self.min_time_between_phases.value(), self.min_phase_length.value(), self.min_anomaly_gradient.value() / 100, self.min_non_anomalous_time.value())
         data_annotations_without_predict = [(i[0], i[1], i[2]) for i in data_annotations]
         self.edf_handler.set_annotations(data_annotations_without_predict)
         annotations = data_annotations.copy()
