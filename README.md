@@ -8,16 +8,6 @@
 ## [Screencast](https://disk.yandex.ru/i/PtTd26cXgSXvEg) 
 ## [Desktop application](https://disk.yandex.ru/d/6Wf5t6aq32rArw)
 
-## Команда
-  
-  Игнатенок Филипп (Frontend)
-
-  Данила Ильин (Backend)
-  
-  Назарова Полина (ML-Специалист)
-  
-  Илья Богданов (Product Manager)
-
 # Запуск
 
   1. Скачать exe-файл по ссылке: https://disk.yandex.ru/d/6Wf5t6aq32rArw
